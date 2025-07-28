@@ -27,4 +27,9 @@ public class TestController {
       return ResponseEntity.noContent().build();
     });
   }
+
+  @GetMapping("/duccao")
+  public String getMao() {
+    return "duoc may oi";
+  }
 }

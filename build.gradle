@@ -1,11 +1,15 @@
 import java.time.Duration
 
 plugins {
-    id 'java'
     id 'org.springframework.boot' version '3.5.3'
     id 'io.spring.dependency-management' version '1.1.7'
     id "com.github.davidmc24.gradle.plugin.avro" version "1.3.0"
     id("com.avast.gradle.docker-compose") version "0.17.12"
+    id("com.gorylenko.gradle-git-properties") version "2.5.2"
+    id 'java'
+    id 'pmd'
+    id 'jacoco'
+    id 'war'
 }
 
 group = 'com.duccao.learn'
@@ -35,6 +39,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation 'org.springframework.boot:spring-boot-starter-aop'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator:'
     implementation 'org.postgresql:postgresql'
     implementation 'com.duccao.starterkafka:starter-kafka:0.0.1-SNAPSHOT'
     implementation("net.logstash.logback:logstash-logback-encoder:8.0")
@@ -66,4 +71,155 @@ dockerCompose {
     dockerComposeWorkingDirectory = project.file('src/main/docker')
     composeAdditionalArgs = ['--compatibility']
     dockerComposeStopTimeout = Duration.ofSeconds(120)
+    useDockerComposeV2 = false
 }
+
+gitProperties {
+    keys = ['git.commit.id', 'git.branch']
+    extProperty = 'gitProps'
+}
+
+jacocoTestReport {
+    reports {
+        html.required = true
+        xml.required = true
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: ['**/Application.class'])
+        }))
+
+    }
+
+    finalizedBy jacocoTestCoverageVerification
+}
+
+jacocoTestCoverageVerification {
+    dependsOn jacocoTestReport
+
+    violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 1.00
+            }
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 1.00
+            }
+        }
+    }
+}
+
+pmd {
+    toolVersion = "6.48.0"
+    pmdMain {
+        reports {
+            xml.required = false
+            html.required = true
+        }
+        source = sourceSets.main.allJava
+        excludes = ['**/generated-main-avro-java/**']
+    }
+
+    pmdTest {
+        reports {
+            xml.required = false
+            html.required = true
+        }
+        source = sourceSets.test.allJava
+    }
+
+}
+
+tasks.register('startTestEnvironment') {
+    group = 'docker'
+    description = 'Starts the test environment using docker-compose'
+    dependsOn(composeUp)
+}
+
+tasks.register('stopTestEnvironment') {
+    group = 'docker'
+    description = 'Stop the test environment using docker-compose'
+    dependsOn(composeDown)
+}
+
+tasks.register('verifyTestEnvironment') {
+    group = 'docker'
+    description = 'Verifies that the test environment containers are running'
+    dependsOn(composeLogs)
+}
+
+tasks.register('componentTest', Test) {
+    group = 'verification'
+    description = 'Run component tests'
+    mustRunAfter(test)
+    useJUnitPlatform()
+
+    dependsOn(startTestEnvironment)
+    include 'component/**'
+}
+
+tasks.register('blackboxTest', Test) {
+    group = 'verification'
+    description = 'Run blackbox tests'
+    dependsOn(bootRunCustom)
+
+    useJUnitPlatform()
+    include 'blackbox/**'
+}
+
+tasks.register('startApp') {
+    group = 'application'
+    description = 'Start the application'
+    dependsOn(bootRun)
+}
+
+tasks.register("bootRunCustom")  {
+    dependsOn bootWar
+
+    doLast {
+        def warFile = project.layout.buildDirectory.asFile.get().absolutePath + "/libs/${project.name}-${project.version}.war"
+
+        println "Starting WAR: ${warFile}"
+
+        def processBuilder = new ProcessBuilder("java", "-jar", "-Dspring.profiles.active=dev", "-Dese.environment=dev", "-Dendpoints.shutdown.enabled=true", "-Dspring.beaninfo.ignore=true", warFile)
+        processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT)
+        processBuilder.redirectError(ProcessBuilder.Redirect.INHERIT)
+
+        def process = processBuilder.start()
+        def pidFile = new File('.pid.lock')
+        pidFile.text = process.pid().toString()
+        println "Spring Boot WAR started with PID: ${process.pid()}"
+    }
+}
+
+tasks.register("kill") {
+    doLast {
+        def pidFile = new File('.pid.lock')
+        if (pidFile.exists()) {
+            def pid = pidFile.text.trim()
+            def killCommandLine = Arrays.asList("kill", "$pid")
+            def process = killCommandLine.execute()
+
+            try {
+                process.waitFor()
+            } finally {
+                pidFile.delete()
+                println "Killed process with PID: ${pid}"
+            }
+        } else {
+            println "PID file not found: ${pidFile.absolutePath}"
+        }
+    }
+}
+
+generateGitProperties.outputs.upToDateWhen { false }
+check.dependsOn jacocoTestCoverageVerification
+check.dependsOn pmdMain, pmdTest
+
+componentTest.finalizedBy(stopTestEnvironment)
+blackboxTest.finalizedBy(stopTestEnvironment, kill)

@@ -58,10 +58,6 @@ dependencies {
 
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
-}
-
 avro {
     stringType = "CharSequence"
 }
@@ -147,12 +143,6 @@ tasks.register('stopTestEnvironment') {
     dependsOn(composeDown)
 }
 
-tasks.register('verifyTestEnvironment') {
-    group = 'docker'
-    description = 'Verifies that the test environment containers are running'
-    dependsOn(composeLogs)
-}
-
 tasks.register('componentTest', Test) {
     group = 'verification'
     description = 'Run component tests'
@@ -166,19 +156,13 @@ tasks.register('componentTest', Test) {
 tasks.register('blackboxTest', Test) {
     group = 'verification'
     description = 'Run blackbox tests'
-    dependsOn(bootRunCustom)
+    dependsOn(startApp)
 
     useJUnitPlatform()
     include 'blackbox/**'
 }
 
-tasks.register('startApp') {
-    group = 'application'
-    description = 'Start the application'
-    dependsOn(bootRun)
-}
-
-tasks.register("bootRunCustom")  {
+tasks.register("startApp")  {
     dependsOn bootWar
 
     doLast {

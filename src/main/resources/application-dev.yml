@@ -6,3 +6,7 @@ management:
   info:
     git:
       mode: full
+
+toggle:
+  kafka:
+    enabled: true

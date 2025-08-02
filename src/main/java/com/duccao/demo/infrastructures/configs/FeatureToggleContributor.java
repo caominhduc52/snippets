@@ -22,11 +22,11 @@ public class FeatureToggleContributor implements InfoContributor {
 
   private Map<String, Object> generateFeatureToggleInfo() {
     Map<String, Object> toggleInfo = new HashMap<>();
-    toggleInfo.put("kafka", checkPropertyToggle("toggle.kafka.enabled"));
+    toggleInfo.put("kafka", retrieveToggleStatus("toggle.kafka.enabled"));
     return toggleInfo;
   }
 
-  private String checkPropertyToggle(String property) {
+  private String retrieveToggleStatus(String property) {
     Boolean toggle = environment.getProperty(property, Boolean.class);
     return BooleanUtils.toString(toggle, "On", "Off", "?");
   }

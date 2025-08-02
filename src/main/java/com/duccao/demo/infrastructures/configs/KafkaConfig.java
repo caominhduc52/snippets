@@ -9,9 +9,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.kafka.ConcurrentKafkaListenerContainerFactoryConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
+import org.springframework.kafka.core.ConsumerFactory;
+import org.springframework.kafka.listener.ConsumerRecordRecoverer;
+import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.serializer.DeserializationException;
 import org.springframework.util.backoff.FixedBackOff;
@@ -31,17 +35,36 @@ public class KafkaConfig {
       @Qualifier("kafkaAvroSpecificListenerContainerFactory")
       ConcurrentKafkaListenerContainerFactory<K, V> defaultConcurrentKafkaListenerContainerFactory
   ) {
-    defaultConcurrentKafkaListenerContainerFactory.setCommonErrorHandler(defaultErrorHandler());
     return defaultConcurrentKafkaListenerContainerFactory;
   }
 
-  private DefaultErrorHandler defaultErrorHandler() {
-    DefaultErrorHandler errorHandler = new DefaultErrorHandler(
-        (consumerRecord, exception) -> logError(exception, consumerRecord, retryMaximumAttempts),
-        new FixedBackOff(retryInterval, retryMaximumAttempts)
-    );
+  @Bean("kafkaBatchAvroSpecificListenerContainerFactory")
+  public ConcurrentKafkaListenerContainerFactory<Object, Object> kafkaBatchListenerContainerFactory(
+      ConcurrentKafkaListenerContainerFactoryConfigurer factoryConfigurer,
+      @Qualifier("avroSpecificConsumerFactory")
+      ConsumerFactory<Object, Object> kafkaConsumerFactory
+  ) {
+    ConcurrentKafkaListenerContainerFactory<Object, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
+    factoryConfigurer.configure(factory, kafkaConsumerFactory);
+    factory.setBatchListener(true);
+    factory.setCommonErrorHandler(defaultErrorHandler());
+    factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+    return factory;
+  }
+
+  @Bean
+  public DefaultErrorHandler defaultErrorHandler() {
+    DefaultErrorHandler errorHandler = new DefaultErrorHandler(getConsumerRecordRecoverer(), getBackOff());
     errorHandler.setCommitRecovered(true);
     return errorHandler;
+  }
+
+  private ConsumerRecordRecoverer getConsumerRecordRecoverer() {
+    return (consumerRecord, exception) -> logError(exception, consumerRecord, retryMaximumAttempts);
+  }
+
+  private FixedBackOff getBackOff() {
+    return new FixedBackOff(retryInterval, retryMaximumAttempts);
   }
 
   private void logError(Exception exception, ConsumerRecord<?, ?> consumerRecord, long maxAttempts) {
@@ -65,8 +88,6 @@ public class KafkaConfig {
           consumerRecord.serializedValueSize(), exception
       );
     }
-    // TODO: remove corrId
-    // MDC.remove(RequestHeader.CORRELATION_ID.key());
   }
 
   private String getClassNameValue(ConsumerRecord<?, ?> consumerRecord) {

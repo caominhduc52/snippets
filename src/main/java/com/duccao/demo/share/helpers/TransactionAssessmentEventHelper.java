@@ -9,6 +9,7 @@ import com.duccao.avro.fltech.ms.teller.TransactionAssessmentStatus;
 import com.duccao.avro.fltech.ms.teller.TransactionDetails;
 import com.duccao.avro.fltech.ms.teller.TransactionOutcome;
 import com.duccao.avro.fltech.ms.teller.TransactionType;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;

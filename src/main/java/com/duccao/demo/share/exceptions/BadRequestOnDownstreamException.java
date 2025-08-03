@@ -1,7 +1,8 @@
 package com.duccao.demo.share.exceptions;
 
-import java.io.Serial;
 import lombok.Getter;
+
+import java.io.Serial;
 
 @Getter
 public class BadRequestOnDownstreamException extends RuntimeException {

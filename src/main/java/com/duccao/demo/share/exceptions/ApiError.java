@@ -2,14 +2,15 @@ package com.duccao.demo.share.exceptions;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.List;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.http.HttpStatus;
+
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.List;
 
 @Getter
 @Setter

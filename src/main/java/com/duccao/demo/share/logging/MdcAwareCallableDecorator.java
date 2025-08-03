@@ -1,9 +1,10 @@
 package com.duccao.demo.share.logging;
 
-import java.util.Map;
-import java.util.concurrent.Callable;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
+
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 @Slf4j
 public class MdcAwareCallableDecorator<T> implements Callable<T> {
@@ -14,7 +15,8 @@ public class MdcAwareCallableDecorator<T> implements Callable<T> {
   public MdcAwareCallableDecorator(Callable<T> callable) {
     this.callable = callable;
     this.contextMap = MDC.getCopyOfContextMap();
-    log.trace("this=\"{}\", current_thread.name=\"{}\" context_map=\"{}\"", this, Thread.currentThread().getName(), this.contextMap);
+    log.trace("this=\"{}\", current_thread.name=\"{}\" context_map=\"{}\"", this, Thread.currentThread().getName(),
+        this.contextMap);
   }
 
   public Callable<T> getCallable() {
@@ -29,9 +31,11 @@ public class MdcAwareCallableDecorator<T> implements Callable<T> {
   public T call() throws Exception {
     if (contextMap != null) {
       MDC.setContextMap(contextMap);
-      log.trace("this=\"{}\", current_thread.name=\"{}\" context_map=\"{}\"", this, Thread.currentThread().getName(), this.contextMap);
+      log.trace("this=\"{}\", current_thread.name=\"{}\" context_map=\"{}\"", this, Thread.currentThread().getName(),
+          this.contextMap);
     } else {
-      log.error("message=\"MDC contextMap is null. {} objects must have at least the correlation ID\"", this.getClass().getName());
+      log.error("message=\"MDC contextMap is null. {} objects must have at least the correlation ID\"",
+          this.getClass().getName());
     }
 
     try {
@@ -43,9 +47,11 @@ public class MdcAwareCallableDecorator<T> implements Callable<T> {
 
   @Override
   public String toString() {
-    return "MdcAwareCallableDecorator{" +
-        "callable=" + callable +
-        ", contextMap=" + contextMap +
-        '}';
+    return "MdcAwareCallableDecorator{"
+        + "callable="
+        + callable
+        + ", contextMap="
+        + contextMap
+        + '}';
   }
 }

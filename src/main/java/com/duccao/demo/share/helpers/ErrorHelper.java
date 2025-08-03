@@ -8,12 +8,13 @@ import com.duccao.demo.share.exceptions.DownstreamException;
 import com.duccao.demo.share.exceptions.ErrorDetails;
 import com.duccao.demo.share.exceptions.InternalServerException;
 import com.duccao.demo.share.exceptions.UnAuthorizedException;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Slf4j
 @Component

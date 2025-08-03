@@ -9,20 +9,7 @@ public record ChunkProcessingResult<T>(
     int failedChunks,
     List<T> successfulEntities,
     List<ChunkError<T>> errors,
-    long processingTimeMs
-) {
-  public boolean hasErrors() {
-    return failedChunks > 0 || !errors.isEmpty();
-  }
-
-  public boolean isCompleteSuccess() {
-    return failedChunks == 0 && errors.isEmpty();
-  }
-
-  public double getSuccessRate() {
-    return totalChunks > 0 ? (double) successfulChunks / totalChunks : 0.0;
-  }
-
+    long processingTimeMs) {
   public ChunkProcessingResult {
     if (totalEntities < 0) {
       throw new IllegalArgumentException("Total entities cannot be negative");
@@ -33,5 +20,17 @@ public record ChunkProcessingResult<T>(
     // Make defensive copies if needed
     successfulEntities = List.copyOf(successfulEntities);
     errors = List.copyOf(errors);
+  }
+
+  public boolean hasErrors() {
+    return failedChunks > 0 || !errors.isEmpty();
+  }
+
+  public boolean isCompleteSuccess() {
+    return failedChunks == 0 && errors.isEmpty();
+  }
+
+  public double getSuccessRate() {
+    return totalChunks > 0 ? (double) successfulChunks / totalChunks : 0.0;
   }
 }

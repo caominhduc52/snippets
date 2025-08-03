@@ -25,7 +25,8 @@ public class TraceMethodExecutionLogger {
     stopWatch.start(methodName);
     Object result = proceedingJoinPoint.proceed();
     stopWatch.stop();
-    log.debug("message=\"Invoked '{} -> {}'\", elapsed_time_ms=\"{}\"ms", className, methodName, stopWatch.getTotalTimeMillis());
+    log.debug("message=\"Invoked '{} -> {}'\", elapsed_time_ms=\"{}\"ms", className, methodName,
+        stopWatch.getTotalTimeMillis());
     log.debug(ConstHelper.TRACE_LOG_TEMPLATE, methodName, "Ending");
     return result;
   }

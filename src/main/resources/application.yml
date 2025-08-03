@@ -1,6 +1,5 @@
 duccao:
   kafka:
-    enable-ssl: false
     bootstrap-servers: localhost:9092
     producer:
       acks: all
@@ -36,6 +35,7 @@ duccao:
       ack-mode: manual_immediate
       log-container-config: true
       idle-event-interval: 300000
+    ssl-enable: false
 
 services:
   kafka:

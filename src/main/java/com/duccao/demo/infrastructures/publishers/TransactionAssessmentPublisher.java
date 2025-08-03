@@ -5,10 +5,6 @@ import com.duccao.avro.fltech.ms.teller.TransactionAssessmentEvent;
 import com.duccao.demo.share.helpers.ErrorHelper;
 import com.duccao.demo.share.helpers.TransactionAssessmentEventHelper;
 import com.duccao.demo.share.tracing.TraceMethodExecutionTime;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.BiConsumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,16 +13,21 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 @ConditionalOnProperty(value = "toggle.kafka.enabled", havingValue = "true")
 public class TransactionAssessmentPublisher {
 
+  private final KafkaTemplate<EventKey, TransactionAssessmentEvent> kafkaTemplate;
+
   @Value("${services.kafka.topic.frontline-assessment-topic}")
   private String transactionAssessmentTopic;
-
-  private final KafkaTemplate<EventKey, TransactionAssessmentEvent> kafkaTemplate;
 
   @TraceMethodExecutionTime
   public void publishTransactionAssessmentEvent() {
@@ -53,7 +54,8 @@ public class TransactionAssessmentPublisher {
         log.error("correlationId={}, status=FAILURE, function={}, message=Operation failed with exception: {}",
             correlationId, "TransactionAssessmentPublisher::onFailure", exception.getMessage(), exception);
       } else {
-        log.info("correlationId={}, status=UNKNOWN, function={}, message=Operation completed with null result and null exception",
+        log.info(
+            "correlationId={}, status=UNKNOWN, function={}, message=Operation completed with null result and null exception",
             correlationId, "TransactionAssessmentPublisher::onUnknown");
       }
     };

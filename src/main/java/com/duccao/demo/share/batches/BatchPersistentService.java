@@ -1,17 +1,18 @@
 package com.duccao.demo.share.batches;
 
-import static org.springframework.util.CollectionUtils.isEmpty;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Service;
+
+import static org.springframework.util.CollectionUtils.isEmpty;
 
 @Service
 public class BatchPersistentService {
 
-//  @Value("${consumer.detectionOutcome.dbBatchSize}")
-  private int dbChunkSize = 1000;
+  //  @Value("${consumer.detectionOutcome.dbBatchSize}")
+  private final int dbChunkSize = 1000;
 
   public <T> void persistInBatches(JpaRepository<T, ?> repository, List<T> entities) {
     persistInBatches(repository, entities, dbChunkSize);
@@ -29,11 +30,10 @@ public class BatchPersistentService {
     }
   }
 
-  public <T> ChunkProcessingResult<T> persistInBatchesWithResult(JpaRepository<T, ?> repository,
-                                                                 List<T> entities, int dbChunkSize) {
+  public <T> ChunkProcessingResult<T> persistInBatchesWithResult(JpaRepository<T, ?> repository, List<T> entities,
+                                                                 int dbChunkSize) {
     if (isEmpty(entities) || dbChunkSize <= 0) {
-      return new ChunkProcessingResult<>(0, 0, 0, 0, List.of(),
-          List.of(), 0L);
+      return new ChunkProcessingResult<>(0, 0, 0, 0, List.of(), List.of(), 0L);
     }
 
     long startTime = System.currentTimeMillis();
@@ -59,14 +59,7 @@ public class BatchPersistentService {
     long processingTime = System.currentTimeMillis() - startTime;
     int totalChunks = (int) Math.ceil((double) entities.size() / dbChunkSize);
 
-    return new ChunkProcessingResult<>(
-        entities.size(),
-        totalChunks,
-        successfulChunks,
-        errors.size(),
-        successfulEntities,
-        errors,
-        processingTime
-    );
+    return new ChunkProcessingResult<>(entities.size(), totalChunks, successfulChunks, errors.size(),
+        successfulEntities, errors, processingTime);
   }
 }

@@ -1,15 +1,16 @@
 package com.duccao.demo.infrastructures.event.consumers;
 
 import com.duccao.demo.share.tracing.TraceMethodExecution;
-import java.time.Instant;
-import java.util.Map;
-import java.util.UUID;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.support.Acknowledgment;
+
+import java.time.Instant;
+import java.util.Map;
+import java.util.UUID;
 
 public abstract class KafkaConsumer<K, V> {
   private final Logger log = LoggerFactory.getLogger(this.getClass());
@@ -35,8 +36,7 @@ public abstract class KafkaConsumer<K, V> {
     var mdcMap = createLoggingMdcProperties(records, batchCorId, receivedTimestamp.toString(), channel);
     log.info(
         "message=Consume Records, receivedAt={}, type={}, batchSize={}, batchCorId={}, minTs={}, maxTs={}, correlationIds={}",
-        receivedTimestamp, channel, batchSize, batchCorId, minTs, maxTs, recordAndPartitionBuilder
-    );
+        receivedTimestamp, channel, batchSize, batchCorId, minTs, maxTs, recordAndPartitionBuilder);
 
     try {
       processRecords(records);

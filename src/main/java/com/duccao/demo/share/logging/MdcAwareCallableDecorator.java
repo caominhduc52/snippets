@@ -4,26 +4,25 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 
 @Slf4j
 public class MdcAwareCallableDecorator<T> implements Callable<T> {
 
   private final Callable<T> callable;
-  private final Map contextMap;
+  private final Map<String, String> contextMap;
 
   public MdcAwareCallableDecorator(Callable<T> callable) {
     this.callable = callable;
     this.contextMap = MDC.getCopyOfContextMap();
-    log.trace("this=\"{}\", current_thread.name=\"{}\" context_map=\"{}\"", this, Thread.currentThread().getName(),
-        this.contextMap);
   }
 
   public Callable<T> getCallable() {
     return callable;
   }
 
-  public Map getContextMap() {
+  public Map<String, String> getContextMap() {
     return contextMap;
   }
 
